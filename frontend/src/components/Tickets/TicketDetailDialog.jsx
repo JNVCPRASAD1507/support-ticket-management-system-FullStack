@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Dialog,
   DialogTitle,
@@ -10,10 +10,17 @@ import {
   MenuItem,
   Button,
   Paper,
+  Alert,
 } from '@mui/material'
 import { updateTicketStatus, addComment, listComments } from '../../api'
 
-const STATUS_OPTIONS = ['open', 'in_progress', 'resolved', 'closed']
+// Must match backend: backend/app/services/ticket_workflow_service.py
+const ALLOWED_TRANSITIONS = {
+  open: ['open', 'in_progress'],
+  in_progress: ['in_progress', 'resolved'],
+  resolved: ['resolved', 'closed', 'in_progress'],
+  closed: ['closed'],
+}
 
 export default function TicketDetailDialog({
   open,
@@ -28,23 +35,43 @@ export default function TicketDetailDialog({
   const [status, setStatus] = useState('open')
   const [comment, setComment] = useState('')
   const [saving, setSaving] = useState(false)
+  const [localError, setLocalError] = useState('')
+
+  const currentStatus = detail?.status || 'open'
+
+  const allowedOptions = useMemo(() => {
+    return ALLOWED_TRANSITIONS[currentStatus] || [currentStatus]
+  }, [currentStatus])
 
   useEffect(() => {
     if (detail?.status) {
       setStatus(detail.status)
     }
     setComment('')
+    setLocalError('')
   }, [detail])
 
   const handleStatusUpdate = async () => {
     if (!detail) return
+    if (status === detail.status) {
+      setLocalError('Status is already set to this value.')
+      return
+    }
+    if (!allowedOptions.includes(status)) {
+      setLocalError(
+        `Cannot change status from "${detail.status}" to "${status}". Allowed: ${allowedOptions.join(', ')}`
+      )
+      return
+    }
     setSaving(true)
+    setLocalError('')
     try {
       await updateTicketStatus(detail.id, status)
       onNotice?.('Status updated')
       onStatusUpdated?.()
       onClose()
     } catch (e) {
+      setLocalError(e.message)
       onError?.(e.message)
     } finally {
       setSaving(false)
@@ -59,6 +86,7 @@ export default function TicketDetailDialog({
       const next = await listComments(detail.id)
       setComments(next || [])
     } catch (e) {
+      setLocalError(e.message)
       onError?.(e.message)
     }
   }
@@ -73,24 +101,38 @@ export default function TicketDetailDialog({
           {detail?.description}
         </Typography>
 
-        <Stack direction="row" spacing={2} alignItems="center" mb={2}>
+        {localError && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setLocalError('')}>
+            {localError}
+          </Alert>
+        )}
+
+        <Stack direction="row" spacing={2} alignItems="center" mb={1}>
           <TextField
             select
             size="small"
             label="Status"
-            value={status}
+            value={allowedOptions.includes(status) ? status : currentStatus}
             onChange={(e) => setStatus(e.target.value)}
+            sx={{ minWidth: 180 }}
           >
-            {STATUS_OPTIONS.map((s) => (
+            {allowedOptions.map((s) => (
               <MenuItem value={s} key={s}>
                 {s}
               </MenuItem>
             ))}
           </TextField>
-          <Button onClick={handleStatusUpdate} variant="contained" disabled={saving}>
+          <Button
+            onClick={handleStatusUpdate}
+            variant="contained"
+            disabled={saving || status === currentStatus}
+          >
             Update status
           </Button>
         </Stack>
+        <Typography variant="caption" color="text.secondary" display="block" mb={2}>
+          Flow: open → in_progress → resolved → closed
+        </Typography>
 
         <Typography variant="h6">Comments</Typography>
         {(comments || []).map((c) => (
