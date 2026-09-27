@@ -1,0 +1,109 @@
+
+
+# ==============================
+# Environment variables and secrets
+# ==============================
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# ==============================
+# Python / FastAPI backend
+# ==============================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+pip-wheel-metadata/
+*.egg-info/
+.eggs/
+wheels/
+build/
+dist/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
+.pyright/
+.pytype/
+
+# ==============================
+# FastAPI / application logs
+# ==============================
+*.log
+logs/
+*.pid
+
+# ==============================
+# React / Vite frontend
+# ==============================
+node_modules/
+dist/
+.vite/
+*.local
+
+# ==============================
+# Testing / coverage
+# ==============================
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# ==============================
+# IDEs and editors
+# ==============================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ==============================
+# Operating system
+# ==============================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ==============================
+# Database / local data
+# ==============================
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.bak
+
+# ==============================
+# Uploads / user-generated files
+# ==============================
+uploads/*
+!uploads/.gitkeep
+storage/*
+!storage/.gitkeep
+
+# ==============================
+# Temporary files
+# ==============================
+tmp/
+temp/
+.cache/
+*.tmp
+*.temp
+
+# ==============================
+# Docker local overrides
+# ==============================
+docker-compose.override.yml
+
